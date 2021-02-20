@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 237cb29037cad63e3c6321fe5eb1a13e3d849c4986cb83e3b602b0a4444cacaa
+-- hash: 733184861fc6c21629cfcc55af18d379ffe6d4d4bc562639185a15c1c924fbf2
 
 name:           3DFH
 version:        0.1.0.0
@@ -22,7 +22,10 @@ source-repository head
 
 library
   exposed-modules:
+      Colour
       Lib
+      PixArray
+      Utils
   other-modules:
       Paths_3DFH
   hs-source-dirs:

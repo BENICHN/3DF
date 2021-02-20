@@ -12,4 +12,4 @@
 #include <tchar.h>
 #include <iostream>
 
-HWND WINAPI startwin(void (*)(int, int, int, void *));
+HWND WINAPI startwin(void (*)(int, int, int, int, int, void *));

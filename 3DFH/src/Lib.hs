@@ -2,30 +2,18 @@
 
 module Lib where
 
-import Data.Vector.Storable (Vector)
+import Colour
 import qualified Data.Vector.Storable as S
 import Foreign
 import Foreign.C.Types
+import PixArray
 
-type Colour = CLong
+foreign export ccall pixarrayC :: CInt -> CInt -> CInt -> CInt -> CInt -> Ptr CLong -> IO ()
 
-getARGB :: Integral a => Colour -> (a, a, a, a)
-getARGB c =
-  let [a, r, g, b] = fromIntegral . (.&. 0xFF) <$> take 4 (iterate (`shiftR` 2) c)
-   in (a, r, g, b)
-
-makeARGB :: Integral a => a -> a -> a -> a -> Colour
-makeARGB a r g b = fromIntegral a * 0x1000000 .|. fromIntegral r * 0x10000 .|. fromIntegral g * 0x100 .|. fromIntegral b
-
-makeRGB :: Integral a => a -> a -> a -> Colour
-makeRGB = makeARGB 0xFF
-
-pixarray :: (Storable a, Integral a) => a -> a -> a -> Vector Colour
-pixarray w h t = S.concatMap (\y -> S.map (\x -> makeRGB x y t) $ S.enumFromTo 1 w) $ S.enumFromTo 1 h
-
-foreign export ccall pixarrayC :: CInt -> CInt -> CInt -> Ptr CLong -> IO ()
-
-pixarrayC :: CInt -> CInt -> CInt -> Ptr CLong -> IO ()
-pixarrayC w h t p =
-  let pixs = pixarray w h t
+pixarrayC :: CInt -> CInt -> CInt -> CInt -> CInt -> Ptr CLong -> IO ()
+pixarrayC w h mx my t p =
+  let c = makeRGB t (255 - t) (10 * t)
+      arr1 = newPixArray w h black
+      lines = foldr1 (.) $ (\(x, y) -> drawLine c (x, y) (mx, my)) <$> [(0, 0), (w `quot` 2, 0), (w, 0), (w, h `quot` 2), (w, h), (w `quot` 2, h), (0, h), (0, h `quot` 2)]
+      PixelArray _ _ pixs = lines arr1
    in S.unsafeWith pixs $ \pxs -> copyArray p pxs (fromIntegral $ w * h)
