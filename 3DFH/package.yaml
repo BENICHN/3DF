@@ -1,0 +1,34 @@
+name:                3DFH
+version:             0.1.0.0
+github:              "BENICHN/3DFH"
+license:             MIT
+author:              "BENICHN"
+# maintainer:          "example@example.com"
+copyright:           "2021 BENICHN"
+
+dependencies:
+- base >= 4.7 && < 5
+- vector
+- matrix
+- criterion
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -no-hs-main
+  - -staticlib
+  - -optcxx-s
+  - -O2
+  - -pgml g++
+  - -o ..\Build\bin\3DFH.a
+
+tests:
+  3DFH-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - 3DFH

@@ -1,0 +1,52 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 237cb29037cad63e3c6321fe5eb1a13e3d849c4986cb83e3b602b0a4444cacaa
+
+name:           3DFH
+version:        0.1.0.0
+homepage:       https://github.com/BENICHN/3DFH#readme
+bug-reports:    https://github.com/BENICHN/3DFH/issues
+author:         BENICHN
+maintainer:     BENICHN
+copyright:      2021 BENICHN
+license:        MIT
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/BENICHN/3DFH
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_3DFH
+  hs-source-dirs:
+      src
+  ghc-options: -no-hs-main -staticlib -optcxx-s -O2 -pgml g++ -o ..\Build\bin\3DFH.a
+  build-depends:
+      base >=4.7 && <5
+    , criterion
+    , matrix
+    , vector
+  default-language: Haskell2010
+
+test-suite 3DFH-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_3DFH
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      3DFH
+    , base >=4.7 && <5
+    , criterion
+    , matrix
+    , vector
+  default-language: Haskell2010

@@ -1,0 +1,1 @@
+clean && clib && hlib && all
