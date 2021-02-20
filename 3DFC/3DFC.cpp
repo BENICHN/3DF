@@ -1,93 +1,130 @@
-#include "3DFC.h"
-#define IDT_TIMER1 0001
+// inspired by https://www.daniweb.com/programming/software-development/code/241875/fast-animation-with-the-windows-gdi
 
+#include "3DFC.h"
 using namespace std;
 
 static TCHAR szWindowClass[] = L"DesktopApp";
 static TCHAR szTitle[] = L"Pipe";
 
-COLORREF *pixels;
+int width, height;
+constexpr int fps = 50;
+
 void (*getpixs)(int, int, int, int, int, void *);
 int frame = 0;
-
+bool working, bmpChanged;
 POINTS mousePos;
-
 HINSTANCE hInst;
 
-LPWSTR ErrorToString(DWORD errorMessageID)
+HBITMAP hbmp;
+HANDLE hTickThread;
+HWND hwnd;
+HDC hdcMem;
+COLORREF *pixels;
+
+DWORD WINAPI tickThreadProc(HANDLE handle)
 {
-    if (errorMessageID == 0)
-        return L"";
+    Sleep(50);
+    ShowWindow(hwnd, SW_SHOWNORMAL);
 
-    wchar_t buf[256];
-    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                  NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                  buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
+    HDC hdc = GetDC(hwnd);
 
-    return buf;
+    hdcMem = CreateCompatibleDC(hdc);
+
+    int delay = 1000 / fps;
+
+    for (;;)
+    {
+        if (bmpChanged)
+        {
+            SelectObject(hdcMem, hbmp);
+            bmpChanged = false;
+        }
+
+        working = true;
+        getpixs(width, height, mousePos.x, mousePos.y, frame, pixels);
+
+        BitBlt(hdc, 0, 0, width, height, hdcMem, 0, 0, SRCCOPY);
+
+        //cout << "frame " << frame++;
+        working = false;
+
+        Sleep(delay);
+    }
+
+    DeleteDC(hdc);
 }
 
-void DisplayPixArray(HDC hdc, int width, int height, COLORREF *pixs)
+void MakeSurface(HWND hwnd)
 {
-    HDC memdc = CreateCompatibleDC(hdc);
-    HBITMAP hbmp = CreateBitmap(width, height, 1, 32, pixs);
+    BITMAPINFO bmi;
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biSizeImage = 0;
+    bmi.bmiHeader.biXPelsPerMeter = 0;
+    bmi.bmiHeader.biYPelsPerMeter = 0;
+    bmi.bmiHeader.biClrUsed = 0;
+    bmi.bmiHeader.biClrImportant = 0;
+    bmi.bmiColors[0].rgbBlue = 0;
+    bmi.bmiColors[0].rgbGreen = 0;
+    bmi.bmiColors[0].rgbRed = 0;
+    bmi.bmiColors[0].rgbReserved = 0;
 
-    HGDIOBJ oldBitmap = SelectObject(memdc, hbmp);
-    BitBlt(hdc, 0, 0, width, height, memdc, 0, 0, SRCCOPY);
-    SelectObject(hdc, oldBitmap);
+    HDC hdc = GetDC(hwnd);
 
-    DeleteDC(memdc);
-    DeleteObject(hbmp);
-}
+    while (working)
+    {
+    }
 
-pair<int, int> GetBounds(HWND hWnd)
-{
-    RECT ca;
-    GetClientRect(hWnd, &ca);
-    int width = (int)(ca.right - ca.left);
-    int height = (int)(ca.bottom - ca.top);
-    return pair<int, int>(width, height);
+    if (hbmp != NULL)
+        DeleteObject(hbmp);
+    hbmp = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void **)&pixels, NULL, 0);
+    bmpChanged = true;
+    DeleteDC(hdc);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    PAINTSTRUCT ps;
-    HDC hdc;
-    pair<int, int> bounds;
-
     switch (message)
     {
     case WM_PAINT:
-        bounds = GetBounds(hWnd);
-        cout << bounds.first << " " << bounds.second;
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hWnd, &ps);
 
-        hdc = BeginPaint(hWnd, &ps);
-        DisplayPixArray(hdc, bounds.first, bounds.second, pixels);
+        if (hdcMem != NULL)
+            BitBlt(hdc, 0, 0, width, height, hdcMem, 0, 0, SRCCOPY);
+
         EndPaint(hWnd, &ps);
 
-        cout << " -- painted" << endl;
-        break;
-    case WM_TIMER:
-        switch (wParam)
-        {
-        case IDT_TIMER1:
-            KillTimer(hWnd, IDT_TIMER1);
-
-            bounds = GetBounds(hWnd);
-            delete[] pixels;
-            pixels = new COLORREF[bounds.first * bounds.second];
-            getpixs(bounds.first, bounds.second, mousePos.x, mousePos.y, frame, pixels);
-            frame++;
-            cout << "frame " << frame << " -- ";
-
-            InvalidateRect(hWnd, 0, TRUE);
-
-            SetTimer(hWnd, IDT_TIMER1, 17, NULL);
-            break;
-        }
+        // cout << " -- painted" << endl;
+    }
+    break;
+    case WM_CREATE:
+    {
+        RECT r;
+        GetClientRect(hWnd, &r);
+        width = r.right - r.left;
+        height = r.bottom - r.top;
+        MakeSurface(hWnd);
+        hTickThread = CreateThread(NULL, NULL, &tickThreadProc, NULL, NULL, NULL);
+    }
+    break;
+    case WM_SIZE:
+    {
+        width = LOWORD(lParam);
+        height = HIWORD(lParam);
+        MakeSurface(hWnd);
+    }
+    break;
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
         break;
     case WM_DESTROY:
-        KillTimer(hWnd, IDT_TIMER1);
+        TerminateThread(hTickThread, 0);
         PostQuitMessage(0);
         break;
     case WM_MOUSEMOVE:
@@ -104,48 +141,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 HWND WINAPI startwin(void (*f)(int, int, int, int, int, void *))
 {
     getpixs = f;
-
     hInst = GetModuleHandle(nullptr);
-    WNDCLASSEX wcex;
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = WndProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = hInst;
-    wcex.hIcon = LoadIcon(hInst, IDI_APPLICATION);
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = szWindowClass;
-    wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
-
-    if (!RegisterClassEx(&wcex))
-    {
-        MessageBox(NULL, L"Call to RegisterClassEx failed!", L"Pipe", NULL);
-        return nullptr;
-    }
-
-    HWND hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 500, 100, NULL, NULL, hInst, NULL);
-
-    if (!hWnd)
-    {
-        MessageBox(NULL, L"Call to CreateWindow failed!", L"Pipe", NULL);
-        return nullptr;
-    }
-
-    SetTimer(hWnd, IDT_TIMER1, 17, NULL);
-
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    UpdateWindow(hWnd);
-
+    WNDCLASSEX wc;
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0))
+
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.hbrBackground = CreateSolidBrush(0);
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hInstance = hInst;
+    wc.lpfnWndProc = WndProc;
+    wc.lpszClassName = L"animation_class";
+    wc.lpszMenuName = NULL;
+    wc.style = 0;
+
+    if (!RegisterClassEx(&wc))
+    {
+        MessageBox(NULL, L"Failed to register window class.", L"Error", MB_OK);
+        return 0;
+    }
+
+    hwnd = CreateWindowEx(WS_EX_APPWINDOW, L"animation_class", L"Animation", WS_OVERLAPPEDWINDOW, 300, 200, 200, 100, NULL, NULL, hInst, NULL);
+
+    UpdateWindow(hwnd);
+
+    while (GetMessage(&msg, 0, 0, NULL) > 0)
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    return hWnd;
+    return 0;
 }

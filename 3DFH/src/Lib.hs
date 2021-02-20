@@ -8,9 +8,9 @@ import Foreign
 import Foreign.C.Types
 import PixArray
 
-foreign export ccall pixarrayC :: CInt -> CInt -> CInt -> CInt -> CInt -> Ptr CLong -> IO ()
+foreign export ccall pixarrayC :: CInt -> CInt -> CInt -> CInt -> CInt -> Ptr Colour -> IO ()
 
-pixarrayC :: CInt -> CInt -> CInt -> CInt -> CInt -> Ptr CLong -> IO ()
+pixarrayC :: CInt -> CInt -> CInt -> CInt -> CInt -> Ptr Colour -> IO ()
 pixarrayC w h mx my t p =
   let c = makeRGB t (255 - t) (10 * t)
       arr1 = newPixArray w h black

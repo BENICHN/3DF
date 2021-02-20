@@ -16,6 +16,7 @@ library:
   source-dirs: src
   ghc-options:
   - -no-hs-main
+  - -threaded
   - -staticlib
   - -optcxx-s
   - -O2

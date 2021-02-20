@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 733184861fc6c21629cfcc55af18d379ffe6d4d4bc562639185a15c1c924fbf2
+-- hash: f7aec9dce0101cf4ec3f13432618ab729ddedb293b83e66be54543fde7518686
 
 name:           3DFH
 version:        0.1.0.0
@@ -30,7 +30,7 @@ library
       Paths_3DFH
   hs-source-dirs:
       src
-  ghc-options: -no-hs-main -staticlib -optcxx-s -O2 -pgml g++ -o ..\Build\bin\3DFH.a
+  ghc-options: -no-hs-main -threaded -staticlib -optcxx-s -O2 -pgml g++ -o ..\Build\bin\3DFH.a
   build-depends:
       base >=4.7 && <5
     , criterion
