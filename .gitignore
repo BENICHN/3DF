@@ -2,6 +2,6 @@
 3DFA/3DFH_stub.h
 3DFC/3DFC.o
 3DFH/.stack-work
-Build/bin/3DFH.a
-Build/bin/3DFA.exe
+Build/bin/
+Build/test/
 .vscode
