@@ -2,15 +2,16 @@
 
 #include "3DFC.h"
 using namespace std;
+using namespace std::chrono;
 
 static TCHAR szWindowClass[] = L"DesktopApp";
 static TCHAR szTitle[] = L"Pipe";
 
 int width, height;
-constexpr int fps = 50;
+constexpr int fps = 60;
 
 void (*getpixs)(int, int, int, int, int, void *);
-int frame = 0;
+int frameCount = 0;
 bool working, bmpChanged;
 POINTS mousePos;
 HINSTANCE hInst;
@@ -20,6 +21,20 @@ HANDLE hTickThread;
 HWND hwnd;
 HDC hdcMem;
 COLORREF *pixels;
+
+void ResizeWindow(HWND hwnd, int w, int h)
+{
+    RECT rcClient, rcWindow;
+    POINT ptDiff;
+
+    GetClientRect(hwnd, &rcClient);
+    GetWindowRect(hwnd, &rcWindow);
+
+    ptDiff.x = (rcWindow.right - rcWindow.left) - rcClient.right;
+    ptDiff.y = (rcWindow.bottom - rcWindow.top) - rcClient.bottom;
+
+    MoveWindow(hwnd, rcWindow.left, rcWindow.top, w + ptDiff.x, h + ptDiff.y, false);
+}
 
 DWORD WINAPI tickThreadProc(HANDLE handle)
 {
@@ -41,14 +56,21 @@ DWORD WINAPI tickThreadProc(HANDLE handle)
         }
 
         working = true;
-        getpixs(width, height, mousePos.x, mousePos.y, frame, pixels);
 
+        auto start = high_resolution_clock::now();
+
+        getpixs(width, height, mousePos.x, mousePos.y, frameCount, pixels);
         BitBlt(hdc, 0, 0, width, height, hdcMem, 0, 0, SRCCOPY);
 
-        //cout << "frame " << frame++;
+        auto end = high_resolution_clock::now();
+        nanoseconds ell = end - start;
+        int c = round(ell.count() / 1000000);
+        int d = max(0, delay - c) / 2;
+
+        frameCount++;
         working = false;
 
-        Sleep(delay);
+        Sleep(d);
     }
 
     DeleteDC(hdc);
@@ -99,8 +121,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             BitBlt(hdc, 0, 0, width, height, hdcMem, 0, 0, SRCCOPY);
 
         EndPaint(hWnd, &ps);
-
-        // cout << " -- painted" << endl;
     }
     break;
     case WM_CREATE:
@@ -165,7 +185,8 @@ HWND WINAPI startwin(void (*f)(int, int, int, int, int, void *))
         return 0;
     }
 
-    hwnd = CreateWindowEx(WS_EX_APPWINDOW, L"animation_class", L"Animation", WS_OVERLAPPEDWINDOW, 300, 200, 200, 100, NULL, NULL, hInst, NULL);
+    hwnd = CreateWindowEx(WS_EX_APPWINDOW, L"animation_class", L"Animation", WS_OVERLAPPEDWINDOW, 300, 200, 700, 700, NULL, NULL, hInst, NULL);
+    ResizeWindow(hwnd, 700, 700);
 
     UpdateWindow(hwnd);
 

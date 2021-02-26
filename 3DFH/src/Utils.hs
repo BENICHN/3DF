@@ -14,3 +14,8 @@ fromRatio r =
   let n = numerator r
       d = denominator r
    in realToFrac n / realToFrac d
+
+-- floor :: (Real a, Integral b) => a -> b
+-- floor x =
+--   let r = toRational x
+--   in fromInteger $ numerator r `div` denominator r

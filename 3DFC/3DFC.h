@@ -11,5 +11,7 @@
 #include <string.h>
 #include <tchar.h>
 #include <iostream>
+#include <chrono>
+#include <math.h>
 
 HWND WINAPI startwin(void (*)(int, int, int, int, int, void *));
