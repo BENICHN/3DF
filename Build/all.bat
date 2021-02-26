@@ -1,1 +1,1 @@
-ghc -no-hs-main ..\3DFA\3DFA.cpp ..\3DFC\3DFC.o .\bin\3DFH.a -optcxx-s -optcxx-w -O2 -pgml g++ -o .\bin\3DFA.exe
+ghc -no-hs-main ..\3DFA\3DFA.cpp ..\3DFC\3DFC.o .\bin\3DFH.a "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\lib\gcc\x86_64-w64-mingw32\10.2.0\libgfortran.a" "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\lib\gcc\x86_64-w64-mingw32\10.2.0\libquadmath.a" -optcxx-s -optcxx-w -O2 -pgml g++ -o .\bin\3DFA.exe

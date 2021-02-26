@@ -36,7 +36,7 @@ drawLine c ps@(lis -> [xs, ys]) pe@(lis -> [xe, ye]) arr@(PixelArray w h bits)
         entries = filter (\i -> 0 < i && i < G.length bits) . genericTake (abs d1) . map (\(x, y) -> w * fromIntegral y + fromIntegral x) $ steps
      in PixelArray w h $ bits `G.unsafeUpd` zip entries (repeat c)
 
-draw :: (RealFrac a, Storable a) => VIBuffer a -> PixelArray -> PixelArray
-draw (vb, ib) pixArr@(PixelArray w h _) =
-  let transVb = G.map (transformPC3 w h) vb
+draw :: (RealFrac a, Storable a, Numeric a) => VIBuffer a -> Mat3 a -> PixelArray -> PixelArray
+draw (vb, ib) tr pixArr@(PixelArray w h _) =
+  let transVb = G.map (transformPC3 w h . (tr #>)) vb
    in G.foldr (\(lis -> [ps, pe]) -> drawLine white (transVb G.! ps) (transVb G.! pe)) pixArr ib
