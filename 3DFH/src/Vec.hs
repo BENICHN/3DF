@@ -10,17 +10,25 @@ type UVec = U.Vector
 type SVec = S.Vector
 type BVec = V.Vector
 
-type Vec2 = L.Vector
-type Vec3 = L.Vector
-type Vec4 = L.Vector
+type Vec2 = L.Vector R
+type Vec3 = L.Vector R
+type Vec4 = L.Vector R
 
-type Mat2 = L.Matrix
-type Mat3 = L.Matrix
-type Mat4 = L.Matrix
+type Lin2 = (Vec2, Vec2)
+type Tgl2 = (Vec2, Vec2, Vec2)
 
+type Lin3 = (Vec3, Vec3)
+type Tgl3 = (Vec3, Vec3, Vec3)
+
+type Mat2 = L.Matrix R
+type Mat3 = L.Matrix R
+type Mat4 = L.Matrix R
+
+{-# INLINE vec #-}
 vec :: Storable a => [a] -> L.Vector a
 vec = L.fromList
 
+{-# INLINE lis #-}
 lis :: Storable a => L.Vector a -> [a]
 lis = L.toList
 

@@ -7,14 +7,13 @@ using namespace std::chrono;
 static TCHAR szWindowClass[] = L"DesktopApp";
 static TCHAR szTitle[] = L"Pipe";
 
-int width, height;
 constexpr int fps = 60;
 
-void (*getpixs)(int, int, int, int, int, void *);
-int frameCount = 0;
+void (*getpixs)(void *, void *);
 bool working, bmpChanged;
-POINTS mousePos;
 HINSTANCE hInst;
+
+SceneState ss;
 
 HBITMAP hbmp;
 HANDLE hTickThread;
@@ -59,15 +58,15 @@ DWORD WINAPI tickThreadProc(HANDLE handle)
 
         auto start = high_resolution_clock::now();
 
-        getpixs(width, height, mousePos.x, mousePos.y, frameCount, pixels);
-        BitBlt(hdc, 0, 0, width, height, hdcMem, 0, 0, SRCCOPY);
+        getpixs(&ss, pixels);
+        BitBlt(hdc, 0, 0, ss.width, ss.height, hdcMem, 0, 0, SRCCOPY);
 
         auto end = high_resolution_clock::now();
         nanoseconds ell = end - start;
         int c = round(ell.count() / 1000000);
         int d = max(0, delay - c) / 2;
 
-        frameCount++;
+        ss.frameCount++;
         working = false;
 
         Sleep(d);
@@ -80,8 +79,8 @@ void MakeSurface(HWND hwnd)
 {
     BITMAPINFO bmi;
     bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
-    bmi.bmiHeader.biWidth = width;
-    bmi.bmiHeader.biHeight = -height;
+    bmi.bmiHeader.biWidth = ss.width;
+    bmi.bmiHeader.biHeight = -ss.height;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
@@ -118,7 +117,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         HDC hdc = BeginPaint(hWnd, &ps);
 
         if (hdcMem != NULL)
-            BitBlt(hdc, 0, 0, width, height, hdcMem, 0, 0, SRCCOPY);
+            BitBlt(hdc, 0, 0, ss.width, ss.height, hdcMem, 0, 0, SRCCOPY);
 
         EndPaint(hWnd, &ps);
     }
@@ -127,16 +126,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         RECT r;
         GetClientRect(hWnd, &r);
-        width = r.right - r.left;
-        height = r.bottom - r.top;
+        ss.width = r.right - r.left;
+        ss.height = r.bottom - r.top;
         MakeSurface(hWnd);
         hTickThread = CreateThread(NULL, NULL, &tickThreadProc, NULL, NULL, NULL);
     }
     break;
     case WM_SIZE:
     {
-        width = LOWORD(lParam);
-        height = HIWORD(lParam);
+        ss.width = LOWORD(lParam);
+        ss.height = HIWORD(lParam);
         MakeSurface(hWnd);
     }
     break;
@@ -148,8 +147,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     case WM_MOUSEMOVE:
-        mousePos = MAKEPOINTS(lParam);
-        break;
+    {
+        POINTS mousePos = MAKEPOINTS(lParam);
+        ss.mouseX = mousePos.x;
+        ss.mouseY = mousePos.y;
+    }
+    break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
         break;
@@ -158,7 +161,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-HWND WINAPI startwin(void (*f)(int, int, int, int, int, void *))
+HWND WINAPI startwin(void (*f)(void *, void *))
 {
     getpixs = f;
     hInst = GetModuleHandle(nullptr);

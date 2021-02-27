@@ -5,12 +5,12 @@ module Geo where
 import Foreign
 import Vec
 
-type VertexBuffer a = BVec (Vec3 a)
-type IndexBuffer = BVec (Vec2 Int)
-type VIBuffer a = (VertexBuffer a, IndexBuffer)
+type VertexBuffer = BVec Vec3
+type IndexBuffer = BVec (Int, Int, Int)
+type VIBuffer = (VertexBuffer, IndexBuffer)
 
-transformPC3 :: (Storable a, RealFrac a, Integral i) => i -> i -> Vec3 a -> Vec2 Int
+transformPC3 :: (Integral i) => i -> i -> Vec3 -> Vec2
 transformPC3 w h (lis -> [x, y, z]) =
-  let xs = floor ((1 + (x {- / z -})) * fromIntegral w) `div` 2
-      ys = floor ((1 - (y {- / z -})) * fromIntegral h) `div` 2
+  let xs = ((1 + (x / z)) * fromIntegral w) / 2
+      ys = ((1 - (y / z)) * fromIntegral h) / 2
    in vec [xs, ys]

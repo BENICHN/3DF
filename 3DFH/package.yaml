@@ -11,6 +11,7 @@ dependencies:
 - vector
 - hmatrix
 - criterion
+- Win32
 
 library:
   source-dirs: src

@@ -15,7 +15,10 @@ fromRatio r =
       d = denominator r
    in realToFrac n / realToFrac d
 
--- floor :: (Real a, Integral b) => a -> b
--- floor x =
---   let r = toRational x
---   in fromInteger $ numerator r `div` denominator r
+frac :: RealFrac a => a -> a
+frac x = let (n, t) = properFraction x in t
+
+enumFromDownto :: (Enum a, Ord a) => a -> a -> [a]
+enumFromDownto s e
+  | s >= e = s : enumFromDownto (pred s) e
+  | otherwise = []

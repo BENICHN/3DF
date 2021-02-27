@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 21b30f63524ce12d5d1e6940710e52033c762d20f969d3c1b2a4fc7d70afce1c
+-- hash: cdace3555fbf9dafa32511c458f23b19188d7750f5d554fe4bb8da98ea51276e
 
 name:           3DFH
 version:        0.1.0.0
@@ -27,6 +27,7 @@ library
       Geo
       Lib
       PixArray
+      SceneState
       Utils
       Vec
   other-modules:
@@ -35,7 +36,8 @@ library
       src
   ghc-options: -no-hs-main -threaded -staticlib -optcxx-s -O2 -pgml g++ -o ..\Build\bin\3DFH.a
   build-depends:
-      base >=4.7 && <5
+      Win32
+    , base >=4.7 && <5
     , criterion
     , hmatrix
     , vector
@@ -51,6 +53,7 @@ test-suite 3DFH-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       3DFH
+    , Win32
     , base >=4.7 && <5
     , criterion
     , hmatrix

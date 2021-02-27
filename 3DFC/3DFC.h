@@ -13,5 +13,6 @@
 #include <iostream>
 #include <chrono>
 #include <math.h>
+#include "SceneState.h"
 
-HWND WINAPI startwin(void (*)(int, int, int, int, int, void *));
+HWND WINAPI startwin(void (*)(void *, void *));
